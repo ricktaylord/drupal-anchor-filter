@@ -1,0 +1,66 @@
+<?php
+
+/**
+ * Implements hook_filter_info().
+ * 
+ * Return a list of filter to use in admin/config/content/formats/add
+ * 
+ */
+function anchor_target_filter_filter_info() {
+	$items['filter_anchor_target_blank'] = array(
+		'title' => t('Anchor target blank for external URL'), 
+		'description' => t('Makes sure all anchor tags with a href external to the site have target="_blank".'), 
+		'process callback' => '_anchor_target_filter_process', 
+		'settings callback' => '_anchor_target_filter_settings', 
+		'default settings' => array(
+			'allowed_html' => '', 
+			'filter_html_help' => 1, 
+			'filter_html_nofollow' => 0,
+      	), 
+    	'tips callback' => '_anchor_target_filter_tips',
+	);
+	return $items;
+}
+
+/**
+ * Implements filter_tips()
+ * 
+ * @param object $filter
+ *   This is a object with informations about the filter
+ *   
+ * @param object $format
+ *   This is a object with informations about the filter
+ *   
+ * @param boolean $long
+ *   (optional). TRUE if is the log tip, FALSE otherwise
+ *   
+ * @return string
+ *   string with the tip for the filter
+ */
+function _anchor_target_filter_tips($filter, $format, $long = FALSE) {
+	if($filter->name=='filter_anchor_target_blank') {
+		return $long ? 'This filter makes sure that all anchor tags with href that is external to the site have target = _blank' : 'Sets externally-linked anchors to have target _blank';
+	}
+	return '';
+}
+
+function _anchor_target_filter_process($text, $filter,$format) {
+	global $base_url; 
+	// If the text passed is an empty string, then return it immediately.
+	if (empty($text)) {
+		return '';
+	}
+	$parts = explode("://",$base_url,1);
+	$domain = $parts[1];
+	$pattern = '/((http|https):\/\/(?!'.$domain.')[\w\.\/\-=?#]+)/';
+	$html_obj = new simple_html_dom();
+	$html_obj->load($text);
+	foreach ($html_obj->find('a') as $anchor_obj) {
+		if(preg_match($pattern, $anchor_obj->href)) {
+			$anchor_obj->target="_blank";
+		}
+	}
+	return $html_obj->save();
+}
+
+?>

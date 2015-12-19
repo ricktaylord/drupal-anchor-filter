@@ -1,0 +1,4 @@
+name = Anchor target filter
+description = Ensures all external <a> tags have target attribute _blank
+core = 7.x
+dependencies[] = simplehtmldom
